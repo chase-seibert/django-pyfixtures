@@ -19,6 +19,7 @@ class Serializer(python.Serializer):
     DO_SORT = True
     DEFAULT_IMPORTS = [
         'import datetime',
+        'import pytz',
         'from decimal import Decimal',
         'from django.contrib.contenttypes.models import ContentType']
 
@@ -74,7 +75,10 @@ class Serializer(python.Serializer):
                 else:
                     code.append((k + '_id', repr(v)))
             else:
-                code.append((k, repr(v)))
+                if isinstance(v, datetime.datetime) and hasattr(v, 'tzinfo'):
+                    code.append((k, re.sub(r'tzinfo=<(.*)>', r"tzinfo=pytz.timezone('\1')", repr(v))))
+                else:
+                    code.append((k, repr(v)))
 
         return ',\n    '.join("%s=%s" % (k, v) for (k, v) in code)
 
